@@ -1,7 +1,10 @@
 export default function Home() {
   return (
     <>
-      <div>contents</div>
+      <div>
+        記事一覧
+        <ul></ul>
+      </div>
     </>
   );
 }
