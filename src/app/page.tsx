@@ -7,18 +7,23 @@ import { Post } from '../../types/post';
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const postsFetch = async () => {
+      setIsLoading(true);
       const res = await fetch(
         'https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts'
       );
       const { posts } = await res.json();
       setPosts(posts);
+      setIsLoading(false);
     };
 
     postsFetch();
   }, []);
+
+  if (isLoading) return <div>読み込み中...</div>;
 
   return (
     <>
