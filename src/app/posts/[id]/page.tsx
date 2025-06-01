@@ -5,7 +5,7 @@
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Post } from '../../../../types/post';
+import { Post } from '../../_types/Post';
 
 export default function Page() {
   const [post, setPost] = useState<Post | null>(null);
