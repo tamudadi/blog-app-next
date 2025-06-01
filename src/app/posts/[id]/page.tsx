@@ -5,10 +5,10 @@
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Post } from '../../_types/Post';
+import { MicroCmsPost } from '../../_types/MicroCmsPost';
 
 export default function Page() {
-  const [post, setPost] = useState<Post | null>(null);
+  const [post, setPost] = useState<MicroCmsPost | null>(null);
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,9 +18,15 @@ export default function Page() {
       setIsLoading(true);
       try {
         const res = await fetch(
-          `https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts/${id}`
+          `https://pgj2u0g35w.microcms.io/api/v1/posts/${id}`,
+          {
+            headers: {
+              'X-MICROCMS-API-KEY': process.env
+                .NEXT_PUBLIC_MICROCMS_API_KEY as string,
+            },
+          }
         );
-        const { post } = await res.json();
+        const post = await res.json();
         setPost(post);
       } catch (error) {
         console.error(error);
@@ -40,7 +46,7 @@ export default function Page() {
   return (
     <>
       <div className="my-14 mx-6">
-        <Image src={post.thumbnailUrl} alt="" height={1000} width={1000} />
+        <Image src={post.thumbnail.url} alt="" height={1000} width={1000} />
         <div className="flex justify-between pt-4">
           <div className="text-sm text-gray-500">
             {new Date(post.createdAt).toLocaleDateString()}
@@ -49,10 +55,10 @@ export default function Page() {
             {post.categories.map((category) => {
               return (
                 <div
-                  key={category}
+                  key={category.id}
                   className="border border-blue-500 rounded text-blue-500 text-sm px-2 py-1"
                 >
-                  {category}
+                  {category.name}
                 </div>
               );
             })}
