@@ -12,6 +12,7 @@ export default function Home() {
   useEffect(() => {
     const postsFetch = async () => {
       setIsLoading(true);
+      //  GETリクエストを http://localhost:3000/api/posts に送信（ローカル開発時）
       const res = await fetch('https://pgj2u0g35w.microcms.io/api/v1/posts', {
         headers: {
           'X-MICROCMS-API-KEY': process.env
