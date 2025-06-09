@@ -10,7 +10,7 @@ export const GET = async (
 ) => {
   const id = params.id;
   try {
-    // Postの一覧をDBから取得
+    // PostをDBから取得
     const post = await prisma.post.findUnique({
       where: {
         id: parseInt(id),
