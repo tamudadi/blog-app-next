@@ -35,3 +35,41 @@ export const GET = async (request: NextRequest) => {
       return NextResponse.json({ status: error.message }, { status: 400 });
   }
 };
+
+// POSTという命名にすることで、POSTリクエストの時にこの関数が呼ばれる
+export const POST = async (request: Request, context: any) => {
+  try {
+    const body = await request.json();
+    const { title, content, categories, thumbnailUrl } = body;
+    const data = await prisma.post.create({
+      data: {
+        title,
+        content,
+        thumbnailUrl,
+      },
+    });
+    for (const category of categories) {
+      await prisma.postCategory.create({
+        data: {
+          categoryId: category.id,
+          postId: data.id,
+        },
+      });
+    }
+    // レスポンスを返す
+    return NextResponse.json({
+      status: 'OK',
+      message: '作成しました',
+      id: data.id,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        {
+          status: error.message,
+        },
+        { status: 400 }
+      );
+    }
+  }
+};
