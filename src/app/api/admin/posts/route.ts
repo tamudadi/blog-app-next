@@ -41,6 +41,7 @@ export const POST = async (request: Request, context: any) => {
   try {
     const body = await request.json();
     const { title, content, categories, thumbnailUrl } = body;
+    // 投稿をDBに保存
     const data = await prisma.post.create({
       data: {
         title,
@@ -48,6 +49,7 @@ export const POST = async (request: Request, context: any) => {
         thumbnailUrl,
       },
     });
+    // 投稿とカテゴリーの中間レコードを保存
     for (const category of categories) {
       await prisma.postCategory.create({
         data: {
