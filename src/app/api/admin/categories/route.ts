@@ -25,3 +25,26 @@ export const GET = async (request: NextRequest) => {
       return NextResponse.json({ status: error.message }, { status: 400 });
   }
 };
+
+export const POST = async (request: NextRequest, context: any) => {
+  try {
+    const body = await request.json();
+
+    const { name } = body;
+
+    const data = await prisma.category.create({
+      data: { name },
+    });
+
+    return NextResponse.json({
+      status: 'OK',
+      message: 'カテゴリーを作成しました',
+      id: data.id,
+    });
+  } catch (error) {
+    console.error(error);
+    if (error instanceof Error) {
+      return NextResponse.json({ status: error.message }, { status: 400 });
+    }
+  }
+};

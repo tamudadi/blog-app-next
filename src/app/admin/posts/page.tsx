@@ -21,9 +21,12 @@ export default function Page() {
     <div className="">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-xl font-bold">記事一覧</h1>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          <Link href="/admin/posts/new">新規作成</Link>
-        </button>
+        <Link
+          href="/admin/posts/new"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          新規作成
+        </Link>
       </div>
 
       <div className="">
