@@ -3,24 +3,19 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { MicroCmsPost } from './_types/MicroCmsPost';
+import { Post } from './_types/Post';
 
 export default function Home() {
-  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const postsFetch = async () => {
       setIsLoading(true);
       //  GETリクエストを http://localhost:3000/api/posts に送信（ローカル開発時）
-      const res = await fetch('https://pgj2u0g35w.microcms.io/api/v1/posts', {
-        headers: {
-          'X-MICROCMS-API-KEY': process.env
-            .NEXT_PUBLIC_MICROCMS_API_KEY as string,
-        },
-      });
-      const { contents } = await res.json();
-      setPosts(contents);
+      const res = await fetch('/api/posts');
+      const { posts } = await res.json();
+      setPosts(posts);
       setIsLoading(false);
     };
 
@@ -42,13 +37,13 @@ export default function Home() {
                       {new Date(post.createdAt).toLocaleDateString()}
                     </div>
                     <div className="flex gap-2">
-                      {post.categories.map((category) => {
+                      {post.postCategories.map((pc) => {
                         return (
                           <div
-                            key={category.id}
+                            key={pc.category.id}
                             className="border border-blue-500 rounded text-blue-500 text-sm px-2 py-1"
                           >
-                            {category.name}
+                            {pc.category.name}
                           </div>
                         );
                       })}
