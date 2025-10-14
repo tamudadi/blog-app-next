@@ -1,5 +1,5 @@
 import { Category } from '@/app/_types/Category';
-import React from 'react';
+import React, { useState } from 'react';
 import { CategoriesSelect } from './CategoriesSelect';
 
 interface PostFormProps {
@@ -29,8 +29,20 @@ export const PostForm: React.FC<PostFormProps> = ({
   onSubmit,
   onDelete,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await onSubmit(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label
           htmlFor="title"
@@ -43,6 +55,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          disabled={isSubmitting}
           className="mt-1 block w-full border border-gray-300 rounded-md p-3"
         />
       </div>
@@ -57,6 +70,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           id="content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          disabled={isSubmitting}
           className="mt-1 block w-full border border-gray-300 rounded-md p-3"
         />
       </div>
@@ -72,6 +86,7 @@ export const PostForm: React.FC<PostFormProps> = ({
           id="thumbnailUrl"
           value={thumbnailUrl}
           onChange={(e) => setThumbnailUrl(e.target.value)}
+          disabled={isSubmitting}
           className="mt-1 block w-full border border-gray-300 rounded-md p-3"
         />
       </div>
@@ -89,14 +104,16 @@ export const PostForm: React.FC<PostFormProps> = ({
       </div>
       <button
         type="submit"
-        className="py-2 px-4 border-transparent rounded-md bg-blue-500 text-white hover:bg-blue-700"
+        disabled={isSubmitting}
+        className="py-2 px-4 border-transparent rounded-md bg-blue-500 text-white hover:bg-blue-700 disabled:bg-gray-100 disabled:opacity-50"
       >
         {mode === 'new' ? '作成' : '更新'}{' '}
       </button>
       {mode === 'edit' && (
         <button
           type="button"
-          className="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ml-2"
+          disabled={isSubmitting}
+          className="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ml-2 disabled:bg-gray-100 disabled:opacity-50"
           onClick={onDelete}
         >
           削除
