@@ -1,5 +1,5 @@
 import { Category } from '@/app/_types/Category';
-import React, { useState } from 'react';
+import React from 'react';
 import { CategoriesSelect } from './CategoriesSelect';
 
 interface PostFormProps {
@@ -14,6 +14,7 @@ interface PostFormProps {
   setCategories: (categories: Category[]) => void;
   onSubmit: (e: React.FormEvent) => void;
   onDelete?: () => void;
+  isSubmitting: boolean;
 }
 
 export const PostForm: React.FC<PostFormProps> = ({
@@ -28,21 +29,10 @@ export const PostForm: React.FC<PostFormProps> = ({
   setCategories,
   onSubmit,
   onDelete,
+  isSubmitting,
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await onSubmit(e);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div>
         <label
           htmlFor="title"

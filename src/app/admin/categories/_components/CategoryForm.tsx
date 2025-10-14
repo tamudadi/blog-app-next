@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface CategoryFormProps {
   mode: 'new' | 'edit';
@@ -6,6 +6,7 @@ interface CategoryFormProps {
   setName: (title: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onDelete?: () => void;
+  isSubmitting: boolean;
 }
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({
@@ -14,21 +15,10 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
   setName,
   onSubmit,
   onDelete,
+  isSubmitting,
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await onSubmit(e);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div>
         <label
           htmlFor="title"

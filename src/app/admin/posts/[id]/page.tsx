@@ -13,6 +13,7 @@ export default function Page() {
   const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetcher = async () => {
@@ -29,28 +30,38 @@ export default function Page() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    await fetch(`/api/admin/posts/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ title, content, thumbnailUrl, categories }),
-    });
+    try {
+      await fetch(`/api/admin/posts/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, content, thumbnailUrl, categories }),
+      });
 
-    alert('記事を更新しました');
+      alert('記事を更新しました');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeletePost = async () => {
     if (!confirm('記事を削除しますか')) return;
+    setIsSubmitting(true);
 
-    await fetch(`/api/admin/posts/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      await fetch(`/api/admin/posts/${id}`, {
+        method: 'DELETE',
+      });
 
-    alert('記事を更新しました。');
+      alert('記事を更新しました。');
 
-    router.push('/admin/posts');
+      router.push('/admin/posts');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -71,6 +82,7 @@ export default function Page() {
         setCategories={setCategories}
         onSubmit={handleSubmit}
         onDelete={handleDeletePost}
+        isSubmitting={isSubmitting}
       />
     </>
   );

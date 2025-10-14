@@ -8,6 +8,7 @@ export default function Page() {
   const [name, setName] = useState('');
   const { id } = useParams();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetcher = async () => {
@@ -21,34 +22,44 @@ export default function Page() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // カテゴリーをPUTで更新。
-    await fetch(`/api/admin/categories/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name }),
-    });
+    try {
+      // カテゴリーをPUTで更新。
+      await fetch(`/api/admin/categories/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      });
 
-    alert('カテゴリーを更新しました');
+      alert('カテゴリーを更新しました');
 
-    // カテゴリー一覧へ遷移。
-    router.push('/admin/categories');
+      // カテゴリー一覧へ遷移。
+      router.push('/admin/categories');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeletePost = async () => {
     if (!confirm(`カテゴリー:${name}を削除しますか？`)) return;
+    setIsSubmitting(true);
 
-    // カテゴリーをDELETEで削除。
-    await fetch(`/api/admin/categories/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      // カテゴリーをDELETEで削除。
+      await fetch(`/api/admin/categories/${id}`, {
+        method: 'DELETE',
+      });
 
-    alert(`カテゴリー:${name}を削除しました`);
+      alert(`カテゴリー:${name}を削除しました`);
 
-    // カテゴリー一覧へ遷移。
-    router.push('/admin/categories');
+      // カテゴリー一覧へ遷移。
+      router.push('/admin/categories');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -63,6 +74,7 @@ export default function Page() {
         setName={setName}
         onSubmit={handleSubmit}
         onDelete={handleDeletePost}
+        isSubmitting={isSubmitting}
       />
     </>
   );
