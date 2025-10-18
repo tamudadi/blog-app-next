@@ -20,5 +20,6 @@ export const useSupabaseSession = () => {
 
     fetcher();
   }, []);
+
   return { session, isLoading, token };
 };
