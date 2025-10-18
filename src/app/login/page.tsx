@@ -1,33 +1,32 @@
 'use client';
 
 import { supabase } from '@/utils/supabase';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function Page() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: { emailRedirectTo: `http://localhost:3000/login` },
       });
 
       if (error) {
-        alert(`登録に失敗しました:${error.message}`);
+        alert('メールアドレスまたはパスワードが正しくありません。');
         return;
       }
 
-      //エラープロパティがなければ
-      setEmail('');
-      setPassword('');
-      alert('確認メールを送信しました。');
+      //errorプロパティがなければ/admin/postsへ
+      router.replace('/admin/posts');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +78,7 @@ export default function Page() {
             disabled={isSubmitting}
             className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
           >
-            {isSubmitting ? '登録中....' : '登録'}
+            {isSubmitting ? 'ログイン中....' : 'ログイン'}
           </button>
         </div>
       </form>
