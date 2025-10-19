@@ -1,3 +1,4 @@
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Category } from '@/app/_types/Category';
 import React, { useEffect } from 'react';
 
@@ -12,6 +13,7 @@ export const CategoriesSelect: React.FC<Props> = ({
 }) => {
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [open, setOpen] = React.useState(false);
+  const { token } = useSupabaseSession();
 
   const handleChange = (id: number) => {
     const isSelect = selectedCategories.some((c) => c.id === id);
@@ -25,13 +27,20 @@ export const CategoriesSelect: React.FC<Props> = ({
   };
 
   useEffect(() => {
+    if (!token) return;
+
     const fetcher = async () => {
-      const res = await fetch('/api/admin/categories');
+      const res = await fetch('/api/admin/categories', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      });
       const { categories } = await res.json();
       setCategories(categories);
     };
     fetcher();
-  }, []);
+  }, [token]);
 
   return (
     <div className="w-full relative">

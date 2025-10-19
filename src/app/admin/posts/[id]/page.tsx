@@ -1,5 +1,6 @@
 'use client';
 
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Category } from '@/app/_types/Category';
 import { Post } from '@/app/_types/Post';
 import { useParams, useRouter } from 'next/navigation';
@@ -14,10 +15,18 @@ export default function Page() {
   const { id } = useParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { token } = useSupabaseSession();
 
   useEffect(() => {
+    if (!token) return;
+
     const fetcher = async () => {
-      const res = await fetch(`/api/admin/posts/${id}`);
+      const res = await fetch(`/api/admin/posts/${id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      });
       const { post }: { post: Post } = await res.json();
       setTitle(post.title);
       setContent(post.content);
@@ -26,17 +35,19 @@ export default function Page() {
     };
 
     fetcher();
-  }, [id]);
+  }, [id, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      if (!token) return;
       await fetch(`/api/admin/posts/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: token,
         },
         body: JSON.stringify({ title, content, thumbnailUrl, categories }),
       });
@@ -50,10 +61,15 @@ export default function Page() {
   const handleDeletePost = async () => {
     if (!confirm('記事を削除しますか')) return;
     setIsSubmitting(true);
+    if (!token) return;
 
     try {
       await fetch(`/api/admin/posts/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
       });
 
       alert('記事を更新しました。');

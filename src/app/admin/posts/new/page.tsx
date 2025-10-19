@@ -1,5 +1,6 @@
 'use client';
 
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Category } from '@/app/_types/Category';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -14,11 +15,13 @@ export default function Page() {
     'https://placehold.jp/800x400.png'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { token } = useSupabaseSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     //　フォームのデフォルトの動作をキャンセルする
     e.preventDefault();
     setIsSubmitting(true);
+    if (!token) return;
 
     try {
       // APIエンドポイントにPOSTリクエストを送信する(記事作成)
@@ -26,6 +29,7 @@ export default function Page() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: token,
         },
         body: JSON.stringify({ title, content, categories, thumbnailUrl }),
       });

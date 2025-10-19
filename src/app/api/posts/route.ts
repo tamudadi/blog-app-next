@@ -1,3 +1,4 @@
+import { supabase } from '@/utils/supabase';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -6,6 +7,16 @@ const prisma = new PrismaClient();
 
 // GETという命名にすることで、GETリクエストの時にこの関数が呼ばれる
 export const GET = async (request: NextRequest) => {
+  //リクエストヘッダーからtokenを取得
+  const token = request.headers.get('Authorization') ?? '';
+
+  //tokenを送り、ユーザー情報をオブジェクトで返却;
+  const { error } = await supabase.auth.getUser(token);
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 });
+
   try {
     //Postの一覧をDBから取得
     //schema.prismaファイルで定義したモデルは小文字はじまりのプロパティで表される(ex.Postはprisma.post)
