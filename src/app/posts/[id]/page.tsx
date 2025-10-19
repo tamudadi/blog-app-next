@@ -3,6 +3,7 @@
  ディレクトリ構造がそのままURLパスになる
 [id] のように [] を使うと動的ルーティングになり、URLの一部を変数として受け取れる */
 import { Post } from '@/app/_types/Post';
+import { supabase } from '@/utils/supabase';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -12,6 +13,26 @@ export default function Page() {
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
+    null
+  );
+
+  // DBに保存しているthumbnailImageKeyを元に、Supabaseから画像のURLを取得する
+  useEffect(() => {
+    if (!post?.thumbnailImageKey) return;
+
+    const fetcher = async () => {
+      const {
+        data: { publicUrl },
+      } = await supabase.storage
+        .from('post_thumbnail')
+        .getPublicUrl(post.thumbnailImageKey);
+
+      setThumbnailImageUrl(publicUrl);
+    };
+
+    fetcher();
+  }, [post?.thumbnailImageKey]);
 
   useEffect(() => {
     const postFetch = async () => {
@@ -38,7 +59,11 @@ export default function Page() {
   return (
     <>
       <div className="my-14 mx-6">
-        <Image src={post.thumbnailUrl} alt="" height={1000} width={1000} />
+        {thumbnailImageUrl && (
+          <div className="flex max-w-full">
+            <Image src={thumbnailImageUrl} alt="" height={1000} width={1000} />
+          </div>
+        )}
         <div className="flex justify-between pt-4">
           <div className="text-sm text-gray-500">
             {new Date(post.createdAt).toLocaleDateString()}

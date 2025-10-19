@@ -11,9 +11,7 @@ export default function Page() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [thumbnailUrl, setThumbnailUrl] = useState(
-    'https://placehold.jp/800x400.png'
-  );
+  const [thumbnailImageKey, setThumbnailImageKey] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useSupabaseSession();
 
@@ -31,7 +29,7 @@ export default function Page() {
           'Content-Type': 'application/json',
           Authorization: token,
         },
-        body: JSON.stringify({ title, content, categories, thumbnailUrl }),
+        body: JSON.stringify({ title, content, categories, thumbnailImageKey }),
       });
 
       // レスポンスから新しく作成された記事のIDを取得する
@@ -59,8 +57,8 @@ export default function Page() {
         setContent={setContent}
         categories={categories}
         setCategories={setCategories}
-        thumbnailUrl={thumbnailUrl}
-        setThumbnailUrl={setThumbnailUrl}
+        thumbnailImageKey={thumbnailImageKey}
+        setThumbnailImageKey={setThumbnailImageKey}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
       />

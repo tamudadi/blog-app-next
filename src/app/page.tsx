@@ -15,6 +15,7 @@ export default function Home() {
       //  GETリクエストを http://localhost:3000/api/posts に送信（ローカル開発時）
       const res = await fetch('/api/posts');
       const { posts } = await res.json();
+      console.log('API response:', posts);
       setPosts(posts);
       setIsLoading(false);
     };

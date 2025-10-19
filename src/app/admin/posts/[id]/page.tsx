@@ -10,7 +10,7 @@ import { PostForm } from '../_components/PostForm';
 export default function Page() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [thumbnailUrl, setThumbnail] = useState('');
+  const [thumbnailImageKey, setThumbnailImageKey] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams();
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function Page() {
       const { post }: { post: Post } = await res.json();
       setTitle(post.title);
       setContent(post.content);
-      setThumbnail(post.thumbnailUrl);
+      setThumbnailImageKey(post.thumbnailImageKey);
       setCategories(post.postCategories.map((pc) => pc.category));
     };
 
@@ -49,7 +49,7 @@ export default function Page() {
           'Content-Type': 'application/json',
           Authorization: token,
         },
-        body: JSON.stringify({ title, content, thumbnailUrl, categories }),
+        body: JSON.stringify({ title, content, thumbnailImageKey, categories }),
       });
 
       alert('記事を更新しました');
@@ -92,8 +92,8 @@ export default function Page() {
         setTitle={setTitle}
         content={content}
         setContent={setContent}
-        thumbnailUrl={thumbnailUrl}
-        setThumbnailUrl={setThumbnail}
+        thumbnailImageKey={thumbnailImageKey}
+        setThumbnailImageKey={setThumbnailImageKey}
         categories={categories}
         setCategories={setCategories}
         onSubmit={handleSubmit}
