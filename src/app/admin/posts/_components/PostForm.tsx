@@ -1,43 +1,61 @@
-import { Category } from '@/app/_types/Category';
+import { PostInputs } from '@/app/_types/PostInputs';
 import { supabase } from '@/utils/supabase';
 import Image from 'next/image';
 import React, { ChangeEvent, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid'; // 固有のIDを生成するライブラリ
 import { CategoriesSelect } from './CategoriesSelect';
 
 interface PostFormProps {
   mode: 'new' | 'edit';
-  title: string;
-  setTitle: (title: string) => void;
-  content: string;
-  setContent: (content: string) => void;
-  thumbnailImageKey: string;
-  setThumbnailImageKey: (url: string) => void;
-  categories: Category[];
-  setCategories: (categories: Category[]) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (data: PostInputs) => Promise<void>;
   onDelete?: () => void;
-  isSubmitting: boolean;
+  // title: string;
+  // setTitle: (title: string) => void;
+  // content: string;
+  // setContent: (content: string) => void;
+  // thumbnailImageKey: string;
+  // setThumbnailImageKey: (url: string) => void;
+  // categories: Category[];
+  // setCategories: (categories: Category[]) => void;
+  // isSubmitting: boolean;
 }
 
 export const PostForm: React.FC<PostFormProps> = ({
   mode,
-  title,
-  setTitle,
-  content,
-  setContent,
-  thumbnailImageKey,
-  setThumbnailImageKey,
-  categories,
-  setCategories,
   onSubmit,
   onDelete,
-  isSubmitting,
+  // title,
+  // setTitle,
+  // content,
+  // setContent,
+  // thumbnailImageKey,
+  // setThumbnailImageKey,
+  // categories,
+  // setCategories,
+  // isSubmitting,
 }) => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { isSubmitting, errors },
+  } = useForm<PostInputs>({
+    defaultValues: {
+      title: '',
+      content: '',
+      thumbnailImageKey: '',
+      categories: [],
+    },
+  });
+
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
     null
   );
 
+  //サムネイルURLの監視
+  const thumbnailImageKey = watch('thumbnailImageKey');
   useEffect(() => {
     if (!thumbnailImageKey) return;
 
@@ -81,12 +99,14 @@ export const PostForm: React.FC<PostFormProps> = ({
       return;
     }
 
+    //RHFの値を更新
+    setValue('thumbnailImageKey', data.path);
     // data.pathに、画像固有のkeyが入っているので、thumbnailImageKeyに格納する
-    setThumbnailImageKey(data.path);
+    // setThumbnailImageKey(data.path);
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label
           htmlFor="title"
@@ -97,11 +117,13 @@ export const PostForm: React.FC<PostFormProps> = ({
         <input
           type="text"
           id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          {...register('title', { required: 'タイトルは必須です' })}
           disabled={isSubmitting}
           className="mt-1 block w-full border border-gray-300 rounded-md p-3"
         />
+        {errors.title && (
+          <p className="text-red-500 text-sm">{errors.title.message}</p>
+        )}
       </div>
       <div>
         <label
@@ -112,11 +134,13 @@ export const PostForm: React.FC<PostFormProps> = ({
         </label>
         <textarea
           id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          {...register('content', { required: '本文を入力してください' })}
           disabled={isSubmitting}
           className="mt-1 block w-full border border-gray-300 rounded-md p-3"
         />
+        {errors.content && (
+          <p className="text-red-500 text-sm">{errors.content.message}</p>
+        )}
       </div>
       <div>
         <label
@@ -151,8 +175,10 @@ export const PostForm: React.FC<PostFormProps> = ({
           カテゴリー
         </label>
         <CategoriesSelect
-          selectedCategories={categories}
-          setSelectedCategories={setCategories}
+          selectedCategories={watch('categories')}
+          setSelectedCategories={(newCategories) =>
+            setValue('categories', newCategories)
+          }
         />
       </div>
       <button
