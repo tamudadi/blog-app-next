@@ -10,6 +10,10 @@ interface PostFormProps {
   mode: 'new' | 'edit';
   onSubmit: (data: PostInputs) => Promise<void>;
   onDelete?: () => void;
+  //親から初期値を受け取る
+  defaultValues?: PostInputs;
+
+  // 以下のpropsはRHF導入に伴い不要になった
   // title: string;
   // setTitle: (title: string) => void;
   // content: string;
@@ -25,6 +29,7 @@ export const PostForm: React.FC<PostFormProps> = ({
   mode,
   onSubmit,
   onDelete,
+  defaultValues,
   // title,
   // setTitle,
   // content,
@@ -41,14 +46,22 @@ export const PostForm: React.FC<PostFormProps> = ({
     watch,
     setValue,
     formState: { isSubmitting, errors },
+    reset,
   } = useForm<PostInputs>({
-    defaultValues: {
+    defaultValues: defaultValues ?? {
       title: '',
       content: '',
       thumbnailImageKey: '',
       categories: [],
     },
   });
+
+  // ★ defaultValuesの変更を検知してフォームをリセット
+  useEffect(() => {
+    if (defaultValues) {
+      reset(defaultValues);
+    }
+  }, [defaultValues, reset]);
 
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
     null

@@ -1,21 +1,17 @@
 'use client';
 
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
-import { Category } from '@/app/_types/Category';
 import { Post } from '@/app/_types/Post';
+import { PostInputs } from '@/app/_types/PostInputs';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PostForm } from '../_components/PostForm';
 
 export default function Page() {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [thumbnailImageKey, setThumbnailImageKey] = useState('');
-  const [categories, setCategories] = useState<Category[]>([]);
   const { id } = useParams();
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useSupabaseSession();
+  const [initialValues, setInitialValues] = useState<PostInputs | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -28,43 +24,48 @@ export default function Page() {
         },
       });
       const { post }: { post: Post } = await res.json();
-      setTitle(post.title);
-      setContent(post.content);
-      setThumbnailImageKey(post.thumbnailImageKey);
-      setCategories(post.postCategories.map((pc) => pc.category));
+      setInitialValues({
+        title: post.title,
+        content: post.content,
+        thumbnailImageKey: post.thumbnailImageKey,
+        categories: post.postCategories.map((pc) => pc.category),
+      });
     };
 
     fetcher();
   }, [id, token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  //更新処理
+  const onSubmit = async (data: PostInputs) => {
+    if (!token) return;
 
     try {
-      if (!token) return;
-      await fetch(`/api/admin/posts/${id}`, {
+      const res = await fetch(`/api/admin/posts/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: token,
         },
-        body: JSON.stringify({ title, content, thumbnailImageKey, categories }),
+        body: JSON.stringify(data),
       });
 
+      if (!res.ok) {
+        throw new Error('記事の更新に失敗しました');
+      }
+
       alert('記事を更新しました');
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error(error);
+      alert('記事の更新に失敗しました');
     }
   };
 
   const handleDeletePost = async () => {
     if (!confirm('記事を削除しますか')) return;
-    setIsSubmitting(true);
     if (!token) return;
 
     try {
-      await fetch(`/api/admin/posts/${id}`, {
+      const res = await fetch(`/api/admin/posts/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -72,13 +73,22 @@ export default function Page() {
         },
       });
 
-      alert('記事を更新しました。');
+      if (!res.ok) {
+        throw new Error('記事の削除に失敗しました');
+      }
+
+      alert('記事を削除しました。');
 
       router.push('/admin/posts');
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error(error);
+      alert('記事の削除に失敗しました');
     }
   };
+
+  if (!initialValues) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -88,17 +98,9 @@ export default function Page() {
 
       <PostForm
         mode="edit"
-        title={title}
-        setTitle={setTitle}
-        content={content}
-        setContent={setContent}
-        thumbnailImageKey={thumbnailImageKey}
-        setThumbnailImageKey={setThumbnailImageKey}
-        categories={categories}
-        setCategories={setCategories}
-        onSubmit={handleSubmit}
+        onSubmit={onSubmit}
         onDelete={handleDeletePost}
-        isSubmitting={isSubmitting}
+        defaultValues={initialValues ?? undefined}
       />
     </>
   );
