@@ -1,97 +1,54 @@
 'use client';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 /* INFO: page.tsx は Next.js のルーティング対象になる特殊ファイル
 ページとして機能させるために default export の React コンポーネントが必須
 これがないと Next.js がページとして認識できずエラーになる */
+
+type ContactForm = {
+  name: string;
+  email: string;
+  message: string;
+};
+
 export default function Page() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [nameErrorMessage, setNameErrorMessage] = useState<string>('');
-  const [emailErrorMessage, setEmailErrorMessage] = useState<string>('');
-  const [messageErrorMessage, setMessageErrorMessage] = useState<string>('');
-  const [isSending, setIsSending] = useState<boolean>(false);
-
-  const validateForm = () => {
-    let isValid = true;
-    let nameError = '';
-    let emailError = '';
-    let messageError = '';
-
-    //お名前
-    if (!name) {
-      nameError = 'お名前を入力してください';
-      isValid = false;
-    } else if (name.length > 30) {
-      nameError = 'お名前は30文字以内で入力してください';
-      isValid = false;
-    }
-    setNameErrorMessage(nameError);
-    //email
-    if (!email) {
-      emailError = 'メールアドレスを入力してください';
-      isValid = false;
-    } else if (!email.match(/.+@.+\..+/)) {
-      emailError = '正しいメールアドレスの形式で入力してください';
-      isValid = false;
-    }
-    setEmailErrorMessage(emailError);
-    //message
-    if (!message) {
-      messageError = '本文を入力してください';
-      isValid = false;
-    } else if (message.length > 500) {
-      messageError = '本文は500文字以内で入力してください';
-      isValid = false;
-    }
-    setMessageErrorMessage(messageError);
-    return isValid;
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting, errors },
+  } = useForm<ContactForm>();
 
   //フォームの送信
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsSending(true);
-
+  const onSubmit = async (data: ContactForm) => {
     const params = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, email, message }),
+      body: JSON.stringify(data),
     };
     try {
-      await fetch(
+      const res = await fetch(
         'https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/contacts',
         params
       );
+      if (!res.ok) {
+        throw new Error(`HTTPエラー: ${res.status}`);
+      }
+
       alert('送信しました');
-      handleClear();
+      reset();
     } catch (error) {
       alert(`送信に失敗しました。${error}`);
-    } finally {
-      setIsSending(false);
     }
-  };
-
-  const handleClear = () => {
-    setName('');
-    setEmail('');
-    setMessage('');
-    setNameErrorMessage('');
-    setEmailErrorMessage('');
-    setMessageErrorMessage('');
   };
 
   return (
     <>
       <div className="max-w-[800px] mx-auto py-10">
         <h1 className="font-bold text-xl mb-10">問い合わせフォーム</h1>
-        {/* TODO:handleSubmitの作成 */}
-        <form className="gap-6 flex flex-col" onSubmit={handleSubmit}>
+        <form className="gap-6 flex flex-col" onSubmit={handleSubmit(onSubmit)}>
           <div className="flex justify-between items-center w-full ">
             <label htmlFor="name" className="w-[240px]">
               お名前
@@ -101,10 +58,17 @@ export default function Page() {
                 className="p-4 border border-gray-300 rounded w-full"
                 type="text"
                 id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...register('name', {
+                  required: 'お名前は必須です',
+                  maxLength: {
+                    value: 30,
+                    message: 'お名前は30文字以内で入力してください',
+                  },
+                })}
               />
-              <p className="text-red-700">{nameErrorMessage}</p>
+              {errors.name && (
+                <p className="text-red-700">{errors.name.message}</p>
+              )}
             </div>
           </div>
           <div className="flex justify-between items-center w-full ">
@@ -116,10 +80,17 @@ export default function Page() {
                 className="p-4 border border-gray-300 rounded w-full"
                 type="email"
                 id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email', {
+                  required: 'メールアドレスは必須です',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: '正しいメールアドレスの形式で入力してください',
+                  },
+                })}
               />
-              <p className="text-red-700">{emailErrorMessage}</p>
+              {errors.email && (
+                <p className="text-red-700">{errors.email.message}</p>
+              )}
             </div>
           </div>
           <div className="flex justify-between items-center w-full ">
@@ -131,25 +102,32 @@ export default function Page() {
                 className="p-4 border border-gray-300 rounded w-full"
                 id="message"
                 rows={8}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                {...register('message', {
+                  required: '本文は必須です',
+                  maxLength: {
+                    value: 500,
+                    message: '本文は500文字以内で入力してください',
+                  },
+                })}
               />
-              <p className="text-red-700">{messageErrorMessage}</p>
+              {errors.message && (
+                <p className="text-red-700">{errors.message.message}</p>
+              )}
             </div>
           </div>
           <div className="flex justify-center gap-4">
             <button
               className="rounded-lg bg-gray-800 text-white font-bold py-2 px-4"
               type="submit"
-              disabled={isSending}
+              disabled={isSubmitting}
             >
               送信
             </button>
             <button
               className="rounded-lg bg-gray-300 font-bold py-2 px-4"
               type="button"
-              onClick={handleClear}
-              disabled={isSending}
+              onClick={() => reset()}
+              disabled={isSubmitting}
             >
               クリア
             </button>
