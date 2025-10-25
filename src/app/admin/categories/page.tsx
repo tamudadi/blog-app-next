@@ -3,28 +3,32 @@
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Category } from '@/app/_types/Category';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-
+import useSWR from 'swr';
 export default function Page() {
-  const [categories, setCategories] = useState<Category[]>([]);
   const { token } = useSupabaseSession();
 
-  useEffect(() => {
-    if (!token) return;
+  //SWRを使ったデータ取得(内部でuseEffectを使っているため、ここではuseEffectは不要)
+  //fetcherでリターンした項目をuseStateなしで管理できる。
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token!,
+      },
+    });
+    const { categories } = await res.json();
+    return categories as Category[];
+  };
 
-    const fetcher = async () => {
-      const res = await fetch('/api/admin/categories', {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-      });
-      const { categories } = await res.json();
-      setCategories(categories);
-    };
+  // SWRでデータ取得
+  const {
+    data: categories,
+    error,
+    isLoading,
+  } = useSWR(token ? '/api/admin/categories' : null, fetcher);
 
-    fetcher();
-  }, [token]);
+  if (error) return <div>データ取得に失敗しました</div>;
+  if (isLoading || !categories) return <div>読み込み中...</div>;
 
   return (
     <>
