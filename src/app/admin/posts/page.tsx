@@ -3,28 +3,32 @@
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Post } from '@/app/_types/Post';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 Link;
 
 export default function Page() {
-  const [posts, setPosts] = useState<Post[]>([]);
   const { token } = useSupabaseSession();
 
-  useEffect(() => {
-    if (!token) return;
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token!,
+      },
+    });
+    const { posts } = await res.json();
+    return posts as Post[];
+  };
 
-    const fetcher = async () => {
-      const res = await fetch('/api/admin/posts', {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-      });
-      const { posts } = await res.json();
-      setPosts(posts);
-    };
-    fetcher();
-  }, [token]);
+  // SWRでデータ取得
+  const {
+    data: posts,
+    error,
+    isLoading,
+  } = useSWR(token ? '/api/admin/posts' : null, fetcher);
+
+  if (error) return <div>データ取得に失敗しました</div>;
+  if (isLoading || !posts) return <div>読み込み中...</div>;
 
   return (
     <div className="">

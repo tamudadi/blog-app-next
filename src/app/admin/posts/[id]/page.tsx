@@ -4,36 +4,38 @@ import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Post } from '@/app/_types/Post';
 import { PostInputs } from '@/app/_types/PostInputs';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { PostForm } from '../_components/PostForm';
 
 export default function Page() {
   const { id } = useParams();
   const router = useRouter();
   const { token } = useSupabaseSession();
-  const [initialValues, setInitialValues] = useState<PostInputs | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
+  //SWRを使ったデータ取得(内部でuseEffectを使っているため、ここではuseEffectは不要)
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token!,
+      },
+    });
+    const { post }: { post: Post } = await res.json();
+    return {
+      title: post.title,
+      content: post.content,
+      thumbnailImageKey: post.thumbnailImageKey,
+      categories: post.postCategories.map((pc) => pc.category),
+    } as PostInputs;
+  };
 
-    const fetcher = async () => {
-      const res = await fetch(`/api/admin/posts/${id}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-      });
-      const { post }: { post: Post } = await res.json();
-      setInitialValues({
-        title: post.title,
-        content: post.content,
-        thumbnailImageKey: post.thumbnailImageKey,
-        categories: post.postCategories.map((pc) => pc.category),
-      });
-    };
-
-    fetcher();
-  }, [id, token]);
+  // SWRで記事データ取得（tokenがあるときだけfetch）
+  const {
+    data: initialValues,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR(token ? [`/api/admin/posts/${id}`, token] : null, fetcher);
 
   //更新処理
   const onSubmit = async (data: PostInputs) => {
@@ -52,7 +54,7 @@ export default function Page() {
       if (!res.ok) {
         throw new Error('記事の更新に失敗しました');
       }
-
+      mutate();
       alert('記事を更新しました');
     } catch (error) {
       console.error(error);
@@ -86,9 +88,8 @@ export default function Page() {
     }
   };
 
-  if (!initialValues) {
-    return <div>Loading...</div>;
-  }
+  if (error) return <div>記事の取得に失敗しました</div>;
+  if (isLoading || !initialValues) return <div>読み込み中...</div>;
 
   return (
     <>
