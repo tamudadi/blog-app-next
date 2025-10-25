@@ -1,31 +1,15 @@
 'use client';
 
-import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Post } from '@/app/_types/Post';
 import Link from 'next/link';
-import useSWR from 'swr';
+import { useFetch } from '../_hooks/useFetch';
 Link;
 
 export default function Page() {
-  const { token } = useSupabaseSession();
-
-  const fetcher = async (url: string) => {
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token!,
-      },
-    });
-    const { posts } = await res.json();
-    return posts as Post[];
-  };
-
-  // SWRでデータ取得
-  const {
-    data: posts,
-    error,
-    isLoading,
-  } = useSWR(token ? '/api/admin/posts' : null, fetcher);
+  const { data, error, isLoading } = useFetch<{ posts: Post[] }>(
+    '/api/admin/posts'
+  );
+  const posts = data?.posts;
 
   if (error) return <div>データ取得に失敗しました</div>;
   if (isLoading || !posts) return <div>読み込み中...</div>;

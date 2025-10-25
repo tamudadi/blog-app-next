@@ -4,7 +4,7 @@ import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Post } from '@/app/_types/Post';
 import { PostInputs } from '@/app/_types/PostInputs';
 import { useParams, useRouter } from 'next/navigation';
-import useSWR from 'swr';
+import { useFetch } from '../../_hooks/useFetch';
 import { PostForm } from '../_components/PostForm';
 
 export default function Page() {
@@ -12,30 +12,18 @@ export default function Page() {
   const router = useRouter();
   const { token } = useSupabaseSession();
 
-  //SWRを使ったデータ取得(内部でuseEffectを使っているため、ここではuseEffectは不要)
-  const fetcher = async (url: string) => {
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token!,
-      },
-    });
-    const { post }: { post: Post } = await res.json();
-    return {
-      title: post.title,
-      content: post.content,
-      thumbnailImageKey: post.thumbnailImageKey,
-      categories: post.postCategories.map((pc) => pc.category),
-    } as PostInputs;
-  };
+  const { data, error, isLoading, mutate } = useFetch<{ post: Post }>(
+    `/api/admin/posts/${id}`
+  );
 
-  // SWRで記事データ取得（tokenがあるときだけfetch）
-  const {
-    data: initialValues,
-    error,
-    isLoading,
-    mutate,
-  } = useSWR(token ? [`/api/admin/posts/${id}`, token] : null, fetcher);
+  const initialValues: PostInputs | undefined = data
+    ? {
+        title: data.post.title,
+        content: data.post.content,
+        thumbnailImageKey: data.post.thumbnailImageKey,
+        categories: data.post.postCategories.map((pc) => pc.category),
+      }
+    : undefined;
 
   //更新処理
   const onSubmit = async (data: PostInputs) => {
