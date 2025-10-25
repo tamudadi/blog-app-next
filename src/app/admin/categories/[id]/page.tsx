@@ -1,9 +1,10 @@
 'use client';
 
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
+import { Category } from '@prisma/client';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import useSWR from 'swr';
+import { useFetch } from '../../_hooks/useFetch';
 import { CategoryForm } from '../_components/CategoryForm';
 
 export default function Page() {
@@ -12,24 +13,10 @@ export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useSupabaseSession();
 
-  //SWRを使ったデータ取得(内部でuseEffectを使っているため、ここではuseEffectは不要)
-  const fetcher = async (url: string) => {
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token!,
-      },
-    });
-    const data = await res.json();
-    return data.category;
-  };
-
-  const {
-    data: category,
-    error,
-    isLoading,
-    mutate,
-  } = useSWR(token ? `/api/admin/categories/${id}` : null, fetcher);
+  const { data, error, isLoading, mutate } = useFetch<{ category: Category }>(
+    `/api/admin/categories/${id}`
+  );
+  const category = data?.category;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +25,6 @@ export default function Page() {
 
     try {
       // カテゴリーをPUTで更新。
-      if (!token) return;
       await fetch(`/api/admin/categories/${id}`, {
         method: 'PUT',
         headers: {
@@ -58,11 +44,11 @@ export default function Page() {
   };
 
   const handleDeletePost = async () => {
+    if (!category || !token) return;
     if (!confirm(`カテゴリー:${category.name}を削除しますか？`)) return;
     setIsSubmitting(true);
 
     try {
-      if (!token) return;
       // カテゴリーをDELETEで削除。
       await fetch(`/api/admin/categories/${id}`, {
         method: 'DELETE',
@@ -92,7 +78,9 @@ export default function Page() {
       <CategoryForm
         mode="edit"
         name={category.name}
-        setName={(v: string) => mutate({ ...category, name: v }, false)}
+        setName={(v: string) =>
+          mutate({ category: { ...category!, name: v } }, false)
+        }
         onSubmit={handleSubmit}
         onDelete={handleDeletePost}
         isSubmitting={isSubmitting}

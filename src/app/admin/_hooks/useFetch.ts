@@ -24,7 +24,7 @@ export const useFetch = <T>(endpoint: string) => {
 
   const { data, error, isLoading, mutate } = useSWR<T>(
     token ? [endpoint, token] : null,
-    fetcher
+    ([url]) => fetcher(url)
   );
 
   return { data, error, isLoading, mutate };
