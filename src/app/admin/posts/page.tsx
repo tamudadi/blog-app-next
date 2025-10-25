@@ -2,20 +2,17 @@
 
 import { Post } from '@/app/_types/Post';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useFetch } from '../_hooks/useFetch';
 Link;
 
 export default function Page() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const { data, error, isLoading } = useFetch<{ posts: Post[] }>(
+    '/api/admin/posts'
+  );
+  const posts = data?.posts;
 
-  useEffect(() => {
-    const fetcher = async () => {
-      const res = await fetch('/api/admin/posts');
-      const { posts } = await res.json();
-      setPosts(posts);
-    };
-    fetcher();
-  }, []);
+  if (error) return <div>データ取得に失敗しました</div>;
+  if (isLoading || !posts) return <div>読み込み中...</div>;
 
   return (
     <div className="">

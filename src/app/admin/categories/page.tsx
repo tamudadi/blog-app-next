@@ -2,20 +2,15 @@
 
 import { Category } from '@/app/_types/Category';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useFetch } from '../_hooks/useFetch';
 
 export default function Page() {
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    const fetcher = async () => {
-      const res = await fetch('/api/admin/categories');
-      const { categories } = await res.json();
-      setCategories(categories);
-    };
-
-    fetcher();
-  }, []);
+  const { data, error, isLoading } = useFetch<{ categories: Category[] }>(
+    '/api/admin/categories'
+  );
+  const categories = data?.categories ?? [];
+  if (error) return <div>データ取得に失敗しました</div>;
+  if (isLoading) return <div>読み込み中...</div>;
 
   return (
     <>

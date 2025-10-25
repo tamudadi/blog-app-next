@@ -1,24 +1,17 @@
 'use client';
 
-import { Category } from '@/app/_types/Category';
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
+import { PostInputs } from '@/app/_types/PostInputs';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { PostForm } from '../_components/PostForm';
 
 export default function Page() {
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [thumbnailUrl, setThumbnailUrl] = useState(
-    'https://placehold.jp/800x400.png'
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { token } = useSupabaseSession();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    //　フォームのデフォルトの動作をキャンセルする
-    e.preventDefault();
-    setIsSubmitting(true);
+  // RHF（PostForm）から送られるdataを受け取る
+  const onSubmit = async (data: PostInputs) => {
+    if (!token) return;
 
     try {
       // APIエンドポイントにPOSTリクエストを送信する(記事作成)
@@ -26,8 +19,9 @@ export default function Page() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: token,
         },
-        body: JSON.stringify({ title, content, categories, thumbnailUrl }),
+        body: JSON.stringify(data),
       });
 
       // レスポンスから新しく作成された記事のIDを取得する
@@ -37,8 +31,9 @@ export default function Page() {
       router.push(`/admin/posts/${id}`);
 
       alert('記事を作成しました');
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error(error);
+      alert('記事の作成に失敗しました');
     }
   };
   return (
@@ -47,19 +42,7 @@ export default function Page() {
         <h1 className="text-xl font-bold mb-4">記事作成</h1>
       </div>
 
-      <PostForm
-        mode="new"
-        title={title}
-        setTitle={setTitle}
-        content={content}
-        setContent={setContent}
-        categories={categories}
-        setCategories={setCategories}
-        thumbnailUrl={thumbnailUrl}
-        setThumbnailUrl={setThumbnailUrl}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-      />
+      <PostForm mode="new" onSubmit={onSubmit} />
     </div>
   );
 }

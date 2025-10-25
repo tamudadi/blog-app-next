@@ -1,27 +1,26 @@
 'use client';
 
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
+import { Category } from '@prisma/client';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useFetch } from '../../_hooks/useFetch';
 import { CategoryForm } from '../_components/CategoryForm';
 
 export default function Page() {
-  const [name, setName] = useState('');
   const { id } = useParams();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { token } = useSupabaseSession();
 
-  useEffect(() => {
-    const fetcher = async () => {
-      const res = await fetch(`/api/admin/categories/${id}`);
-      const { category } = await res.json();
-      setName(category.name);
-    };
-
-    fetcher();
-  }, [id]);
+  const { data, error, isLoading, mutate } = useFetch<{ category: Category }>(
+    `/api/admin/categories/${id}`
+  );
+  const category = data?.category;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!category || !token) return;
     setIsSubmitting(true);
 
     try {
@@ -30,8 +29,9 @@ export default function Page() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: token,
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: category.name }),
       });
 
       alert('カテゴリーを更新しました');
@@ -44,23 +44,30 @@ export default function Page() {
   };
 
   const handleDeletePost = async () => {
-    if (!confirm(`カテゴリー:${name}を削除しますか？`)) return;
+    if (!category || !token) return;
+    if (!confirm(`カテゴリー:${category.name}を削除しますか？`)) return;
     setIsSubmitting(true);
 
     try {
       // カテゴリーをDELETEで削除。
       await fetch(`/api/admin/categories/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
       });
 
-      alert(`カテゴリー:${name}を削除しました`);
-
+      alert(`カテゴリー:${category.name}を削除しました`);
       // カテゴリー一覧へ遷移。
       router.push('/admin/categories');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (error) return <div>エラーが発生しました</div>;
+  if (isLoading || !category) return <div>読み込み中...</div>;
 
   return (
     <>
@@ -70,8 +77,10 @@ export default function Page() {
 
       <CategoryForm
         mode="edit"
-        name={name}
-        setName={setName}
+        name={category.name}
+        setName={(v: string) =>
+          mutate({ category: { ...category!, name: v } }, false)
+        }
         onSubmit={handleSubmit}
         onDelete={handleDeletePost}
         isSubmitting={isSubmitting}

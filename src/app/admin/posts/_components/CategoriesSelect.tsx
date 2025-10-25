@@ -1,5 +1,7 @@
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { Category } from '@/app/_types/Category';
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useFetch } from '../../_hooks/useFetch';
 
 interface Props {
   selectedCategories: Category[];
@@ -10,8 +12,13 @@ export const CategoriesSelect: React.FC<Props> = ({
   selectedCategories,
   setSelectedCategories,
 }) => {
-  const [categories, setCategories] = React.useState<Category[]>([]);
   const [open, setOpen] = React.useState(false);
+  const { token } = useSupabaseSession();
+
+  const { data, error, isLoading } = useFetch<{ categories: Category[] }>(
+    '/api/admin/categories'
+  );
+  const categories = data?.categories ?? [];
 
   const handleChange = (id: number) => {
     const isSelect = selectedCategories.some((c) => c.id === id);
@@ -24,14 +31,12 @@ export const CategoriesSelect: React.FC<Props> = ({
     setSelectedCategories([...selectedCategories, category]);
   };
 
-  useEffect(() => {
-    const fetcher = async () => {
-      const res = await fetch('/api/admin/categories');
-      const { categories } = await res.json();
-      setCategories(categories);
-    };
-    fetcher();
-  }, []);
+  if (error) {
+    return <div>カテゴリーの取得に失敗しました。</div>;
+  }
+  if (isLoading) {
+    return <div>カテゴリーを読み込み中...</div>;
+  }
 
   return (
     <div className="w-full relative">

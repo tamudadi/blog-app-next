@@ -1,5 +1,6 @@
 'use client';
 
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CategoryForm } from '../_components/CategoryForm';
@@ -8,16 +9,21 @@ export default function Page() {
   const [name, setName] = useState('');
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { token } = useSupabaseSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      if (!token) return;
       // カテゴリーをPOSTで作成。
       const res = await fetch(`/api/admin/categories`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
         body: JSON.stringify({ name }),
       });
 
