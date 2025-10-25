@@ -2,26 +2,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { Post } from './_types/Post';
 
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const { posts } = await res.json();
+    return posts as Post[];
+  };
+  const { data: posts = [], error, isLoading } = useSWR('/api/posts', fetcher);
 
-  useEffect(() => {
-    const postsFetch = async () => {
-      setIsLoading(true);
-      //  GETリクエストを http://localhost:3000/api/posts に送信（ローカル開発時）
-      const res = await fetch('/api/posts');
-      const { posts } = await res.json();
-      console.log('API response:', posts);
-      setPosts(posts);
-      setIsLoading(false);
-    };
-
-    postsFetch();
-  }, []);
+  if (error) return <div>データ取得に失敗しました</div>;
 
   if (isLoading) return <div>読み込み中...</div>;
 
